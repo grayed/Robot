@@ -143,11 +143,17 @@ module SituationData
         readline(io) # -> "temperature_map:"     
         temperature_map = reshape(parse.(Int, split(readline(io))), frame_size)
         readline(io) # -> "markers_map:"
-        markers_map = Set(Tuple(parse.(Int,split(index_pair, ","))) for index_pair in split(readline(io)[2:end-1], ")("))
+        line = strip(readline(io))
+        if isempty(line) == true
+            markers_map = Set()
+        else
+            pmarkers_map = Set(Tuple(parse.(Int,split(index_pair, ","))) for index_pair in split(line[2:end-1], ")("))   
+        end
         readline(io) # -> "borders_map:"
-        borders_map = Vector{Set}(undef, prod(frame_size))
+        borders_map = fill(Set(), prod(frame_size)) # - вектор пустых множеств
         for k ∈ eachindex(borders_map) 
-            borders_map[k] = Set(HorizonSide.(parse.(Int, split(readline(io)))))
+            line = strip(readline(io))
+            isempty(line) || (borders_map[k] = Set(HorizonSide.(parse.(Int, split(line)))))
         end
         borders_map = reshape(borders_map, frame_size) 
         return frame_size, is_framed, robot_position, temperature_map, markers_map, borders_map
@@ -173,7 +179,7 @@ module SituationData
     end
 
     function adjacent_position(position::Tuple{Integer,Integer},side::HorizonSide)
-    # возвращает соседнюю позицию (в пределах фрейма) с заданного направления
+    # - возвращает соседнюю позицию (в пределах фрейма) с заданного направления
         if side == Nord
             return position[1]-1, position[2]
         elseif side == Sud
@@ -186,7 +192,7 @@ module SituationData
     end  
         
     function is_inner_border(position::Tuple{Integer,Integer}, side::HorizonSide, borders_map::Matrix{Set{HorizonSide}})
-    # проверяет наличие перегородки и дополнительно возвращает актуальную позицию и направление на перегородку (если перегородка есть)
+    # - проверяет наличие перегородки и дополнительно возвращает актуальную позицию и направление на перегородку (если перегородка есть)
     # (в матрице borders_map каждому элементу соответствует "актуальная" позиция: из 2х соседних позиций только одна может быть "актуальной")
         if side ∈ borders_map[position...]
             return true, position, side
@@ -234,7 +240,8 @@ module SituationData
             end
         end
 
-        function set_or_del_border(position,side::HorizonSide) # ставит/удаляет перегородку в текущей позиции на заданном направлении
+        function set_or_del_border(position,side::HorizonSide) 
+        # - ставит/удаляет перегородку в текущей позиции на заданном направлении
             required_pop, actual_position, actual_side = is_inner_border(position, side, BUFF_SITUATION.borders_map)
             if required_pop == true # в BUFF_SITUATION.borders_map надо "удалить" перегородку из позиции actual_position в направлении actual_side 
                 pop!(BUFF_SITUATION.borders_map[actual_position...],actual_side) # (actual_side == side | inverse(side))
@@ -243,7 +250,8 @@ module SituationData
             end
         end
 
-        function set_or_del_marker(position) # ставит/удаляет маркер в текущей позиции
+        function set_or_del_marker(position) 
+        # - ставит/удаляет маркер в текущей позиции
             if position ∈ BUFF_SITUATION.markers_map
                 pop!(BUFF_SITUATION.markers_map, position) # маркер удален
             else
@@ -288,6 +296,9 @@ module SituationData
     
 
     function sitedit(sit::Situation, file::AbstractString)
+    # - открывает обстановку, соответствующей структуре данных sit, в НОВОМ окне
+    # - обеспечивает возможность редактирования обстановки с помощью мыши
+    # - результат сохраняет в файле file 
         global BUFF_SITUATION, IS_FIXED_ROBOT_POSITION
         BUFF_SITUATION=sit
         draw(BUFF_SITUATION; newfig=true)
@@ -328,7 +339,12 @@ mutable struct Robot
     situation::Situation
     animate::Bool # если true, то - имеет место непрерывная визуализация смены обстановки при выполнении команд робота
     actualfigure::Union{Nothing,Figure}
-    Robot(sit::Situation;animate=false) = begin if animate==true draw(sit) end; new(sit,animate,nothing) end
+    Robot(sit::Situation;animate=false) = begin 
+        if animate==true 
+            SituationData.sitedit(sit, "untitled.sit") #draw(sit) 
+        end 
+        new(sit,animate,nothing) 
+    end
     Robot(frame_size::Tuple{Integer,Integer}=(UInt(11),UInt(12));animate=false) = Robot(Situation(frame_size),animate=animate) #begin sit=Situation(frame_size); if show==true draw(sit) end; new(sit,show) end
     Robot(num_rows::Integer,num_colons::Integer;animate=false) = Robot((num_rows,num_colons);animate=animate) #new(draw(Situation((num_rows,num_colons))),show)
     Robot(file_name::AbstractString;animate=false) = Robot(Situation(file_name);animate=animate) #begin sit=Situation(file_name); if show==true draw(sit) end; new(sit,show) end  #new(draw(Situation(file_name)),show)
@@ -517,9 +533,3 @@ using .HorizonSideRobot
 
 6. Надо бы еще менять заголовок окна в зависимости от режима просмотра, редактирования или анимации
 =#
-
-
-"""
-КОММИТ
-    Добавлено @warn("...") в строке 443
-"""
