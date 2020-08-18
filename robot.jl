@@ -23,7 +23,7 @@ module SituationData
     const BORDER_WIDTH = 3
     
     const BODY_KREST_SIZE = 1200 # концы креста чуть-чуть выступают за пределы тела робота, но часть креста в пределах тела нейтрализована
-    const BODY_SIZE = 800 # размеры тела робота подобраны для поля 11x12  
+    const BODY_SIZE = 800 # размеры тела робота подобраны для поля 11x12 (важен только наибольший из 2х размеров)  
     const BODY_COLOR = :gray 
     const BODY_ALPHA = 0.5 # тело робота делается полупрозрачным с тем, чтобы сквозь него могли бы просвечивать маркеры
     const BODY_STYLE = :o
@@ -34,6 +34,7 @@ module SituationData
 
     mutable struct Situation
         frame_size::Tuple{UInt,UInt} # = (число_строк_поля, число_столбцов_поля)
+        coefficient::Float64
         is_framed::Bool # = true, если имеется внешняя рамка
         robot_position::Tuple{Int,Int} # - пара: номер строки, номер столбца (как в матрице, но возможны и неположительные значения)
         temperature_map::Matrix{Int} # считается, что за пределами фрейма температура всюду равна 0
@@ -43,7 +44,7 @@ module SituationData
         Situation(file_name::AbstractString) =  new(load(file_name)...)
     end
 
-    body_create(x::AbstractFloat,y::AbstractFloat; body_color=BODY_COLOR) = scatter([x],[y], c=body_color, s=BODY_SIZE, marker=BODY_STYLE, alpha=BODY_ALPHA) 
+    body_create(coefficient::AbstractFloat,x::AbstractFloat,y::AbstractFloat; body_color=BODY_COLOR) = scatter([x],[y], c=body_color, s=BODY_SIZE*coefficient, marker=BODY_STYLE, alpha=BODY_ALPHA) 
 
     function draw(sit::Situation; newfig::Bool=true) #, file::AbstractString="temp.sit")
     # -- отображает обстановку (sit) в новом окне (newfig==true)) или - в текущем (newfig=false; но если окно отсутствовало, то оно создается)
@@ -53,12 +54,12 @@ module SituationData
         BUFF_SITUATION = sit
         
         function robot_create(x::AbstractFloat,y::AbstractFloat)
-            scatter([x],[y], c=:k, s=BODY_KREST_SIZE, marker=:+, alpha=1) 
-            scatter([x],[y], c=:w, s=BODY_SIZE, marker=:+, alpha=1) # нейтрализует крест в пределах тела
-            body_create(x,y) # тело - полупрозрачное
+            scatter([x],[y], c=:k, s=BODY_KREST_SIZE*sit.coefficient, marker=:+, alpha=1) 
+            scatter([x],[y], c=:w, s=BODY_SIZE*sit.coefficient, marker=:+, alpha=1) # нейтрализует крест в пределах тела
+            body_create(sit.coefficient,x,y) # тело - полупрозрачное
         end
         
-        marker_create(x::AbstractFloat,y::AbstractFloat) = scatter([x],[y],c=MARKER_COLOR,s=MARKER_SIZE,marker=MARKER_STYLE)
+        marker_create(coefficient::AbstractFloat,x::AbstractFloat,y::AbstractFloat) = scatter([x],[y],c=MARKER_COLOR,s=MARKER_SIZE*coefficient,marker=MARKER_STYLE)
         
         function field_create(axes_size::Tuple{UInt,UInt}, newfig::Bool) 
         # -- создает пустое поле заданных размеров, разделенное на клетки размером 1х1 каждая
@@ -113,7 +114,7 @@ module SituationData
             plot([0,sit.frame_size[2],sit.frame_size[2],0,0], [0,0,sit.frame_size[1],sit.frame_size[1],0], linewidth=BORDER_WIDTH, color=BORDER_COLOR)
         end
         for position ∈ sit.markers_map
-            marker_create(get_coordinates(position)...)
+            marker_create(sit.coefficient,get_coordinates(position)...)
         end
         robot_create(get_coordinates(sit.robot_position)...)            
         return nothing 
@@ -129,13 +130,16 @@ module SituationData
         temperature_map = rand(-273:500, frame_size...)
         markers_map = Set{Tuple{Int,Int}}() # - пустое множество, т.е. по умолчанию маркеров на поле нет
         borders_map = fill(Set(), frame_size) # - матрица пустых множеств, т.е. по умолчанию на поле внутренних перегородок нет
-        return frame_size, is_framed, robot_position, temperature_map, markers_map, borders_map
+        coefficient = 12/max(frame_size...) # - для размеров поля 11x12 coefficient = 1.0
+        return frame_size, coefficient, is_framed, robot_position, temperature_map, markers_map, borders_map
     end
 
     function load(file_name::AbstractString) 
         io = open(file_name)
         readline(io) # -> "frame_size:"
         frame_size = Tuple(parse.(Int, split(readline(io))))
+        readline(io) # -> coefficient
+        coefficient = parse(Float64,readline(io))
         readline(io) # -> "is_framed:"
         is_framed = (parse(Bool, readline(io)))
         readline(io) # -> "robot_position:"
@@ -147,7 +151,7 @@ module SituationData
         if isempty(line) == true
             markers_map = Set()
         else
-            pmarkers_map = Set(Tuple(parse.(Int,split(index_pair, ","))) for index_pair in split(line[2:end-1], ")("))   
+            markers_map = Set(Tuple(parse.(Int,split(index_pair, ","))) for index_pair in split(line[2:end-1], ")("))   
         end
         readline(io) # -> "borders_map:"
         borders_map = fill(Set(), prod(frame_size)) # - вектор пустых множеств
@@ -156,13 +160,15 @@ module SituationData
             isempty(line) || (borders_map[k] = Set(HorizonSide.(parse.(Int, split(line)))))
         end
         borders_map = reshape(borders_map, frame_size) 
-        return frame_size, is_framed, robot_position, temperature_map, markers_map, borders_map
+        return frame_size, coefficient, is_framed, robot_position, temperature_map, markers_map, borders_map
     end
 
     function save(sit::Situation,file_name::AbstractString)
         open(file_name,"w") do io
             write(io, "frame_size:\n") # 11 12
             write(io, join(sit.frame_size, " "),"\n")
+            write(io, "coefficient:\n")
+            write(io, join(sit.coefficient),"\n")
             write(io, "is_framed:\n") # "true"
             write(io, join(sit.is_framed), "\n")
             write(io, "robot_position:\n") # 1 1
@@ -273,7 +279,7 @@ module SituationData
             if BUFF_SITUATION.robot_position == position 
                 if IS_FIXED_ROBOT_POSITION == false                   
                     IS_FIXED_ROBOT_POSITION = true
-                    body_create(floor(x)+0.5,floor(y)+0.5; body_color=:white)
+                    body_create(BUFF_SITUATION.coefficient, floor(x)+0.5,floor(y)+0.5; body_color=:white)
                     # цвет робота временно стал белым (положение робота "фиксировано")
                     return nothing # draw(...) не выполняется                     
                 else  
@@ -513,23 +519,19 @@ using .HorizonSideRobot
 #=
 ОСТАВШИЕСЯ ЕЩЕ ПРОБЛЕМЫ
 
-1. Размеры маркеров (робот, маркер) сейчас зависят от размера поля 
-Тут надо ввести поправочный коеффициент на фактический размер поля. 
-И надо это будет еще согласовать со значением ρ (строка 226)
-
-2. И еще хорошо бы сделать так, чтобы размеры окна можно было бы изменять только пропорционально
+1. И еще хорошо бы сделать так, чтобы размеры окна можно было бы изменять только пропорционально
 см. https://github.com/JuliaPy/PyPlot .jl
 Или - чтобы их вообще нельзя было бы изменять.
 
-3. Хорошо бы еще, все это реализовать в Makie.jl а не в PyPlot.jl
+2. Хорошо бы еще, все это реализовать в Makie.jl а не в PyPlot.jl
 (чтобы избавиться от привязки к Python+matplotlib)
 
-4. Надо бы сделать так, чтобы если ссылка на робота утрачивается, то автоматически закрывалось бы и окно, 
+3. Надо бы сделать так, чтобы если ссылка на робота утрачивается, то автоматически закрывалось бы и окно, 
 с ним ассоциированное (Observables, Reactive???)
 Без этого возможны небольщие проблемы: возможно, что откроется 2-ое окно, но редактирование temp.sit может быть 
 доступно и из предыдущего окна, и все, что в нем было может перекочевать в новое окно
 
-5. Хорошо бы еще сделать так, чтобы окно с роботом "запоминало" свое место на экране
+4. Хорошо бы еще сделать так, чтобы окно с роботом "запоминало" свое место на экране
 
-6. Надо бы еще менять заголовок окна в зависимости от режима просмотра, редактирования или анимации
+5. Надо бы еще менять заголовок окна в зависимости от режима просмотра, редактирования или анимации
 =#
