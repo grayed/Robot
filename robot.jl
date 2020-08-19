@@ -64,20 +64,20 @@ module SituationData
         function field_create(axes_size::Tuple{UInt,UInt}, newfig::Bool) 
         # -- создает пустое поле заданных размеров, разделенное на клетки размером 1х1 каждая
             rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
-            rcParams["toolbar"] = "None" # - что бы не было toolbar в figure
-            rcParams["axes.edgecolor"]=rcParams["grid.color"]
-            rcParams["xtick.color"]=rcParams["figure.facecolor"]
-            rcParams["ytick.color"]=rcParams["figure.facecolor"]
-            rcParams["figure.figsize"]=(7*axes_size[1]/axes_size[2],7-0.2) # canvas - 7*7 дюймов (если есть toolbar, усли нет, то -0.2 ???)
+            rcParams["toolbar"]="None" # - строки toolbar в figure быть не должно
+            rcParams["axes.edgecolor"]=rcParams["grid.color"] # - цвет рамки осей должен совпадать с цветом линий коорд.сетки
+            rcParams["xtick.color"]=rcParams["figure.facecolor"] # - разметка осей не должна быть видимой
+            rcParams["ytick.color"]=rcParams["figure.facecolor"] 
+            rcParams["figure.figsize"]=(7*axes_size[1]/axes_size[2],7-0.2) # - размеры окна задаются с учетом отсутствия toolbar и сучетом фактических размеров клеточного поля (если бы имелся toolbar, то по умолчанию размеры canvas были бы - 7*7 дюймов)
             if newfig==true
-                figure()
+                figure() # - создается новое окно (пока без координатных осей)
             else
-                cla() # - очистить текущие координатные оси
+                cla() # - очищаются текущие координатные оси (если их не было, то автоматически создаются новые в новом окне)
             end
-            axis([0,axes_size[1],0,axes_size[2]])
-            xticks(0:axes_size[1])
+            axis([0,axes_size[1],0,axes_size[2]]) # - устанавливаются размеры текущих осей или создаются новые оси в текущем окне
+            xticks(0:axes_size[1]) # - задаются положения координатных линий
             yticks(0:axes_size[2])
-            grid(true)
+            grid(true) # - отображаются координатные линии
             return nothing
         end # nested function field_create    
 
@@ -116,7 +116,9 @@ module SituationData
         for position ∈ sit.markers_map
             marker_create(sit.coefficient,get_coordinates(position)...)
         end
-        robot_create(get_coordinates(sit.robot_position)...)            
+        if is_inside(sit)==true # робот - за пределами поля (такая ситуация может возникнуть при перемещениях робота)
+            robot_create(get_coordinates(sit.robot_position)...)            
+        end
         return nothing 
     end # function draw
 
