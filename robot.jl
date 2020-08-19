@@ -116,7 +116,7 @@ module SituationData
         for position ∈ sit.markers_map
             marker_create(sit.coefficient,get_coordinates(position)...)
         end
-        if is_inside(sit)==true # робот - за пределами поля (такая ситуация может возникнуть при перемещениях робота)
+        if is_inside(sit)==true # робот - в пределах поля (иная ситуация может возникнуть при перемещениях робота)
             robot_create(get_coordinates(sit.robot_position)...)            
         end
         return nothing 
@@ -163,7 +163,7 @@ module SituationData
         end
         borders_map = reshape(borders_map, frame_size) 
         return frame_size, coefficient, is_framed, robot_position, temperature_map, markers_map, borders_map
-    end
+    end # nested funcion load
 
     function save(sit::Situation,file_name::AbstractString)
         open(file_name,"w") do io
@@ -184,7 +184,7 @@ module SituationData
                 write(io, join(Int.(set_positions)," "), "\n")   # 0 1 3
             end
         end 
-    end
+    end # nested function save
 
     function adjacent_position(position::Tuple{Integer,Integer},side::HorizonSide)
     # - возвращает соседнюю позицию (в пределах фрейма) с заданного направления
@@ -369,9 +369,7 @@ function move(r::Robot, side::HorizonSideRobot.HorizonSide)
     end
     r.situation.robot_position = adjacent_position(r.situation.robot_position, side)
     if r.animate==true 
-        if is_inside(r)==true   
-            draw(r.situation; newfig=false) 
-        end
+        draw(r.situation; newfig=false) 
         sleep(ANIMATION_SLEEP_TIME)
     end
     return nothing
@@ -512,6 +510,8 @@ position(r::Robot) = r.situation.robot_position # - возвращает тек�
 end # module HorizonSideRobot
 
 using .HorizonSideRobot 
+
+@info "\n*** Включен код с определениями соледующих типов\n\n\t1. @enum HorizonSide Nord=0 West=1 Sud=2 Ost=3 - \"перечисление\", определяет стороны горизонта на клетчатом поле с роботом: \nNord - Север (вверху), West - Запад (слева), Sud - Юг (внизу), Ost - Восток (справа)\n\n\t2. Robot - тип, позволяющий создавать исполнителей \"Робот на клетчатом поле со сторонами горизонта\" \nДля ознакомления со способами использования конструктора Robot и режимами работы см. help?>Robot \n(для перехода в режим help следует набрать в REPL: julia>?+<enter>)\n\n*** Более детальную информацию можно найти на https://github.com/Vibof/Robot"
 
 #inverse(side::HorizonSide) = HorizonSide(mod(Int(side)+2, 4)) 
 #left(side::HorizonSide) = HorizonSide(mod(Int(side)+1, 4))
