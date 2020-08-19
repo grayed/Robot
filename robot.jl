@@ -1,4 +1,7 @@
 # robot.jl
+
+# DATE 2020 08 17 22-18
+
 module HorizonSideRobot # "робот на клетчатом поле со сторонами горизонта"
 
 export HorizonSide, Nord, Sud, West, Ost, Robot, move, isborder, putmarker, ismarker, temperature, show, save, sitedit, sitcreate
@@ -512,6 +515,8 @@ end # module HorizonSideRobot
 using .HorizonSideRobot 
 
 @info "\n*** Включен код с определениями соледующих типов\n\n\t1. @enum HorizonSide Nord=0 West=1 Sud=2 Ost=3 - \"перечисление\", определяет стороны горизонта на клетчатом поле с роботом: \nNord - Север (вверху), West - Запад (слева), Sud - Юг (внизу), Ost - Восток (справа)\n\n\t2. Robot - тип, позволяющий создавать исполнителей \"Робот на клетчатом поле со сторонами горизонта\" \nДля ознакомления со способами использования конструктора Robot и режимами работы см. help?>Robot \n(для перехода в режим help следует набрать в REPL: julia>?+<enter>)\n\n*** Более детальную информацию можно найти на https://github.com/Vibof/Robot"
+
+const ROBOT_VERSION = "2020 08 17 22-18"
 
 #inverse(side::HorizonSide) = HorizonSide(mod(Int(side)+2, 4)) 
 #left(side::HorizonSide) = HorizonSide(mod(Int(side)+1, 4))
