@@ -4,7 +4,7 @@
 
 module HorizonSideRobot # "робот на клетчатом поле со сторонами горизонта"
 
-export HorizonSide, Nord, Sud, West, Ost, Robot, move, isborder, putmarker, ismarker, temperature, show, save, sitedit, sitcreate
+export HorizonSide, Nord, Sud, West, Ost, Robot, move!, isborder, putmarker!, ismarker, temperature, show, save, sitedit, sitcreate
 
 """
     @enum HorizonSide Nord=0 West=1 Sud=2 Ost=3
@@ -17,10 +17,10 @@ ANIMATION_SLEEP_TIME=0.01
 
 module SituationData
     using PyPlot, ...HorizonSideRobot #: HorizonSide
-    export Situation, draw, save, adjacent_position, is_inner_border, is_inside, sitedit, handle_button_press_event, Figure, gcf
+    export Situation, draw, save, adjacent_position, is_inner_border, is_inside, sitedit!, handle_button_press_event!, Figure, gcf
 
-    BUFF_SITUATION = nothing # инициализируется в draw(...), а затем используется в в handle_button_press_event(...)
-    IS_FIXED_ROBOT_POSITION = false # используется как флаг в handle_button_press_event(...)
+    BUFF_SITUATION = nothing # инициализируется в draw(...), а затем используется в в handle_button_press_event!(...)
+    IS_FIXED_ROBOT_POSITION = false # используется как флаг в handle_button_press_event!(...)
     
     const BORDER_COLOR = :black#:blue
     const BORDER_WIDTH = 3
@@ -218,7 +218,7 @@ module SituationData
         end
     end
 
-    function handle_button_press_event(event, file::AbstractString)
+    function handle_button_press_event!(event, file::AbstractString)
         # Обработчик события "button_press_event" (клик мышью по figure)
         # При кликании в пределах axes,
         # в зависимости от значения координат курсора мыши в пределах одной их клеток, в зависимомти от того, 
@@ -251,7 +251,7 @@ module SituationData
             end
         end
 
-        function set_or_del_border(position,side::HorizonSide) 
+        function set_or_del_border!(position,side::HorizonSide) 
         # - ставит/удаляет перегородку в текущей позиции на заданном направлении
             required_pop, actual_position, actual_side = is_inner_border(position, side, BUFF_SITUATION.borders_map)
             if required_pop == true # в BUFF_SITUATION.borders_map надо "удалить" перегородку из позиции actual_position в направлении actual_side 
@@ -261,7 +261,7 @@ module SituationData
             end
         end
 
-        function set_or_del_marker(position) 
+        function set_or_del_marker!(position) 
         # - ставит/удаляет маркер в текущей позиции
             if position ∈ BUFF_SITUATION.markers_map
                 pop!(BUFF_SITUATION.markers_map, position) # маркер удален
@@ -273,14 +273,14 @@ module SituationData
         if x < δ || y < δ || x_max-x < δ || y_max-y < δ # -  клик - в окрестности рамки
             BUFF_SITUATION.is_framed = !(BUFF_SITUATION.is_framed)
         elseif Δy >= abs(Δx) && Δy >= ρ   
-            set_or_del_border(position,Nord)
+            set_or_del_border!(position,Nord)
         elseif Δx <= -abs(Δy) && Δx <= -ρ 
-            set_or_del_border(position,West)
+            set_or_del_border!(position,West)
         elseif Δy <= -abs(Δx) && Δy <= -ρ 
-            set_or_del_border(position,Sud)
+            set_or_del_border!(position,Sud)
         elseif Δx >= abs(Δy) && Δx >= ρ   
-            set_or_del_border(position,Ost)
-        else # set_or_del_marker ИЛИ фикировать текущее положение робота ИЛИ переместить зафиксированного робота в новое положение
+            set_or_del_border!(position,Ost)
+        else # set_or_del_marker! ИЛИ фикировать текущее положение робота ИЛИ переместить зафиксированного робота в новое положение
             if BUFF_SITUATION.robot_position == position 
                 if IS_FIXED_ROBOT_POSITION == false                   
                     IS_FIXED_ROBOT_POSITION = true
@@ -292,7 +292,7 @@ module SituationData
                 end
             else # в текущей клетке (по которой был клик) робота нет
                 if IS_FIXED_ROBOT_POSITION == false # до этого по клетке с роботом клика не было
-                    set_or_del_marker(position) 
+                    set_or_del_marker!(position) 
                 else
                     IS_FIXED_ROBOT_POSITION = false
                     BUFF_SITUATION.robot_position = position # робот поставлен в текущую позицию
@@ -303,17 +303,17 @@ module SituationData
         # Изменения должны отображаться в тех же самых координатных осях, где они и были произведены, поэтому обязательно должно быть 
         # newfig==false
         save(BUFF_SITUATION, file)
-    end # function handle_button_press_event
+    end # function handle_button_press_event!
     
 
-    function sitedit(sit::Situation, file::AbstractString)
+    function sitedit!(sit::Situation, file::AbstractString)
     # - открывает обстановку, соответствующей структуре данных sit, в НОВОМ окне
     # - обеспечивает возможность редактирования обстановки с помощью мыши
     # - результат сохраняет в файле file 
         global BUFF_SITUATION, IS_FIXED_ROBOT_POSITION
         BUFF_SITUATION=sit
         draw(BUFF_SITUATION; newfig=true)
-        gcf().canvas.mpl_connect("button_press_event", event -> handle_button_press_event(event, file))
+        gcf().canvas.mpl_connect("button_press_event", event -> handle_button_press_event!(event, file))
         gcf().canvas.mpl_connect("close_event", event -> begin global BUFF_SITUATION, IS_FIXED_ROBOT_POSITION; BUFF_SITUATION, IS_FIXED_ROBOT_POSITION = nothing, false end)
         return nothing
     end
@@ -352,7 +352,7 @@ mutable struct Robot
     actualfigure::Union{Nothing,Figure}
     Robot(sit::Situation;animate=false) = begin 
         if animate==true 
-            SituationData.sitedit(sit, "untitled.sit") #draw(sit) 
+            sitedit!(sit, "untitled.sit") #draw(sit) 
         end 
         new(sit,animate,nothing) 
     end
@@ -362,11 +362,11 @@ mutable struct Robot
 end
 
 """
-    move(r::Robot, side::HorizonSide)::Nothing
+    move!(r::Robot, side::HorizonSide)::Nothing
 
 -- Перемещает робота в соседнюю клетку в заданном направлении (если только на пути нет перегoродки, в противном случае - прерывание)
 """
-function move(r::Robot, side::HorizonSideRobot.HorizonSide)
+function move!(r::Robot, side::HorizonSideRobot.HorizonSide)
     if isborder(r,side)==true   
         error("Робот врезался в перегородку при попытке сделать шаг в направлении $(side)") 
     end
@@ -419,11 +419,11 @@ function isborder(r::Robot,side::HorizonSideRobot.HorizonSide)::Bool
 end # function isborder
 
 """
-    putmarker(r::Robot)::Nothing
+    putmarker!(r::Robot)::Nothing
 
 -- Ставит маркер в клетке с роботом
 """
-putmarker(r::Robot)::Nothing = begin 
+putmarker!(r::Robot)::Nothing = begin 
     push!(r.situation.markers_map, position(r))
     if r.animate == true 
         draw(r.situation;newfig=false) 
@@ -470,7 +470,7 @@ function show(r::Robot; edit::Bool=false)
     if edit==false
         draw(r.situation; newfig=true) 
     else # edit==true
-        SituationData.sitedit(r.situation,"temp.sit")
+        sitedit!(r.situation,"temp.sit")
         # обеспечена возможность редактирования с помощью мыши отображаемой обстановки и немедленного сохранения каждого акта редактирвания в файле temp.sit
     end
     r.actualfigure=gcf()
@@ -495,16 +495,16 @@ save(r::Robot, outfile::AbstractString)=save(r.situation,outfile)
 function sitedit(infile::AbstractString; outfile=infile)
     global BUFF_SITUATION, IS_FIXED_ROBOT_POSITION
     BUFF_SITUATION=Situation(infile) #; show(BUFF_SITUATION)
-    sitedit(BUFF_SITUATION, outfile)
+    sitedit!(BUFF_SITUATION, outfile)
 end
 
 """
-    sitcreate(num_rows::UInt,num_colons::UInt; newfile="untitled.sit")::Nothing
+    sitcreate(num_rows::Integer,num_colons::Integer; newfile="untitled.sit")::Nothing
 
 -- Предназначена для создания и визуального (с помощью мыши) редактирования нового sit-файле (содержащего данные некоторой обстановки на поле сроботом). 
 По умолчанию имя создаваемого файла - "untitled.sit"    
 """    
-sitcreate(num_rows::UInt,num_colons::UInt; newfile="untitled.sit") = sitedit(Situation((num_rows, num_colons)), newfile)
+sitcreate(num_rows::Integer,num_colons::Integer; newfile="untitled.sit") = sitedit!(Situation((num_rows, num_colons)), newfile)
 
 # вспомогательные функции:
 is_inside(r::Robot) = SituationData.is_inside(r.situation) # - проверяет, находится ли робот в фрейме (в наблюдаемой части поля)
@@ -516,7 +516,7 @@ using .HorizonSideRobot
 
 @info "\n*** Включен код с определениями соледующих типов\n\n\t1. @enum HorizonSide Nord=0 West=1 Sud=2 Ost=3 - \"перечисление\", определяет стороны горизонта на клетчатом поле с роботом: \nNord - Север (вверху), West - Запад (слева), Sud - Юг (внизу), Ost - Восток (справа)\n\n\t2. Robot - тип, позволяющий создавать исполнителей \"Робот на клетчатом поле со сторонами горизонта\" \nДля ознакомления со способами использования конструктора Robot и режимами работы см. help?>Robot \n(для перехода в режим help следует набрать в REPL: julia>?+<enter>)\n\n*** Более детальную информацию можно найти на https://github.com/Vibof/Robot"
 
-const ROBOT_VERSION = "2020 08 17 22-18"
+const ROBOT_VERSION = "2020 08 20 22-24"
 
 #inverse(side::HorizonSide) = HorizonSide(mod(Int(side)+2, 4)) 
 #left(side::HorizonSide) = HorizonSide(mod(Int(side)+1, 4))
