@@ -228,7 +228,7 @@ module SituationData
         # из отрезков (сторон клеток), которые ставятся/снимаются только индивидуально.
         # Клик за пределами axes пока что игнорируется (планируется, что когда-нибудь такие клики будут приводить к соответствующим изменениям размеров поля).
         # Результат каждого акта редактирования обстановки немедленно сохраняется в файле file
-        
+ 
         global BUFF_SITUATION, IS_FIXED_ROBOT_POSITION
   
         # x, y = event.x, event.y - координаты в пределах всего холста (в пикселах)
@@ -352,13 +352,13 @@ mutable struct Robot
     actualfigure::Union{Nothing,Figure}
     Robot(sit::Situation;animate=false) = begin 
         if animate==true 
-            sitedit!(sit, "untitled.sit") #draw(sit) 
+            sitedit!(sit, "untitled.sit")  
         end 
         new(sit,animate,nothing) 
     end
-    Robot(frame_size::Tuple{Integer,Integer}=(UInt(11),UInt(12));animate=false) = Robot(Situation(frame_size),animate=animate) #begin sit=Situation(frame_size); if show==true draw(sit) end; new(sit,show) end
-    Robot(num_rows::Integer,num_colons::Integer;animate=false) = Robot((num_rows,num_colons);animate=animate) #new(draw(Situation((num_rows,num_colons))),show)
-    Robot(file_name::AbstractString;animate=false) = Robot(Situation(file_name);animate=animate) #begin sit=Situation(file_name); if show==true draw(sit) end; new(sit,show) end  #new(draw(Situation(file_name)),show)
+    Robot(frame_size::Tuple{Integer,Integer}=(UInt(11),UInt(12));animate=false) = Robot(Situation(frame_size),animate=animate) 
+    Robot(num_rows::Integer,num_colons::Integer;animate=false) = Robot((num_rows,num_colons);animate=animate) 
+    Robot(file_name::AbstractString;animate=false) = Robot(Situation(file_name);animate=animate) 
 end
 
 """
@@ -489,7 +489,7 @@ save(r::Robot, outfile::AbstractString)=save(r.situation,outfile)
 """
     sitedit(infile::AbstractString; outfile=infile)::Nothing
 
--- Предназначена для визуального (с помощью мыши) редактирования обстановки на поле с роботом, предварительно сохраненной в sit-файле. 
+-- предназначена для визуального (с помощью мыши) редактирования обстановки на поле с роботом, предварительно сохраненной в sit-файле. 
 Результат редактирования сохораняется в выходном sit-файле (который по умолчанию совпадает с входным sit-файлом)    
 """
 function sitedit(infile::AbstractString; outfile=infile)
@@ -501,7 +501,7 @@ end
 """
     sitcreate(num_rows::Integer,num_colons::Integer; newfile="untitled.sit")::Nothing
 
--- Предназначена для создания и визуального (с помощью мыши) редактирования нового sit-файле (содержащего данные некоторой обстановки на поле сроботом). 
+-- предназначена для создания и визуального (с помощью мыши) редактирования нового sit-файле (содержащего данные некоторой обстановки на поле сроботом). 
 По умолчанию имя создаваемого файла - "untitled.sit"    
 """    
 sitcreate(num_rows::Integer,num_colons::Integer; newfile="untitled.sit") = sitedit!(Situation((num_rows, num_colons)), newfile)
