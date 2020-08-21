@@ -32,8 +32,8 @@
 3. После этого уже из REPL Julia необходимо будет скачать с GitHab пакет PyPlot.jl.   
 
 ПОЯСНЕНИЕ для новичков в Julia. Делается это с помощью встроенного пакетного менеджера очень просто. Сначала надо из стандартного режима REPL перейти в режим пакетного менеджера, набрав 
->]+<Enter>
-(здесь и далее под > имеется ввиду приглашение командной строки julia>)
+julia>]+<Enter>
+
 После чего выполнить скачивание: pkg>add PyPlot.jl+<Enter>
 Процесс скачивания займет некоторое время. 
 После его завершения следует вернуться в стандартный режим REPL нажатием клавиши <Backspace> ("забой") 
@@ -46,7 +46,7 @@
 После этого включения имена HorizonSide, Nord, West, Sud, Ost, Robot, move!, isborder, putmarker!, ismarker, temperature, show, save, а так же - sitedit, sitcreate окажутся доступными в соответствующем пространстве имен. 
 В результате, в частности, станет возможным получить более детальную информацию о каждом из них с помощью встроенной системы помощи (help). 
 
-ПОЯСНЕНИЕ для новичков в Julia. Чтобы из стандартного режима REPL перейти в режим help, требуется набрать >?+<enter>
+ПОЯСНЕНИЕ для новичков в Julia. Чтобы из стандартного режима REPL перейти в режим help, требуется набрать julia>?+<enter>
 Тогда,например, можно будет набрать help>Robot+<enter>, и получить интересующую информацию. 
 Также важно иметь в виду, что функция include осуществляет просто вставку соответствующего программного кода (текста). Поэтому если include(...) выполнить более одного раза, то в последующем это приведет к ошибке.
 
@@ -90,29 +90,43 @@ save(r, <имя_файла>).
 
 Решение.
 
-function put_krest(r::Robot) 
+function put_krest(r::Robot)
+
     for side in HorizonSide
+
         putmarkers!(r,side)
+
         move_by_markers(r,inverse(side))
+
     end
+
     putmarker!(r)
+
 end
 
 putmarkers!(r::Robot,side::HorizonSide) = while isborder(r,side)==false 
+
     move!(r,side)
+
     putmarker!(r)
+
 end
 
 move_by_markers(r::Robot,side::HorizonSide) = while ismarker(r)==true 
+
     move!(r,side) 
+
 end
 
 inverse(side::HorizonSide) = HorizonSide(mod(Int(side)+2, 4)) 
 
-Если данные определения функций размещены, например, в файле example.jl,
-выполнить функцию krest из REPL нужно будет следующим образом.
+Если данные определения функций размещены, например, в файле example.jl, то
+выполнить функцию put_krest из REPL нужно будет следующим образом.
 
->include("robot.jl")
->r=Robot(animate=true) 
-(с помощью мыши можно поставить робота в любое начальное положение)
->put_krest!(r)
+julia> include("robot.jl")
+
+lulia> r=Robot(animate=true) 
+
+julia># в открывшемся окне с помощью мыши можно поставить робота в любое требуемое начальное положение
+
+julia> put_krest!(r)
