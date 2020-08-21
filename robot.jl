@@ -22,7 +22,7 @@ module SituationData
     BUFF_SITUATION = nothing # инициализируется в draw(...), а затем используется в в handle_button_press_event!(...)
     IS_FIXED_ROBOT_POSITION = false # используется как флаг в handle_button_press_event!(...)
     
-    const BORDER_COLOR = :black#:blue
+    const BORDER_COLOR = :black
     const BORDER_WIDTH = 3
     
     const BODY_KREST_SIZE = 1200 # концы креста чуть-чуть выступают за пределы тела робота, но часть креста в пределах тела нейтрализована
@@ -32,8 +32,10 @@ module SituationData
     const BODY_STYLE = :o
     
     const MARKER_SIZE = 250
-    const MARKER_COLOR = :green #:blue #:red
+    const MARKER_COLOR = :green 
     const MARKER_STYLE = :s 
+
+    const DELTA_AXIS_SIZE = 0.03 # - "запас" для рамки axis, чтобы при установке внешней рамки поля она была бы хорошо видна 
 
     mutable struct Situation
         frame_size::Tuple{UInt,UInt} # = (число_строк_поля, число_столбцов_поля)
@@ -68,7 +70,7 @@ module SituationData
         # -- создает пустое поле заданных размеров, разделенное на клетки размером 1х1 каждая
             rcParams = PyPlot.PyDict(PyPlot.matplotlib."rcParams")
             rcParams["toolbar"]="None" # - строки toolbar в figure быть не должно
-            rcParams["axes.edgecolor"]=rcParams["grid.color"] # - цвет рамки осей должен совпадать с цветом линий коорд.сетки
+            rcParams["axes.edgecolor"]=rcParams["figure.facecolor"] # - рамка осей должен не должна быть видимой
             rcParams["xtick.color"]=rcParams["figure.facecolor"] # - разметка осей не должна быть видимой
             rcParams["ytick.color"]=rcParams["figure.facecolor"] 
             rcParams["figure.figsize"]=(7*axes_size[1]/axes_size[2],7-0.2) # - размеры окна задаются с учетом отсутствия toolbar и сучетом фактических размеров клеточного поля (если бы имелся toolbar, то по умолчанию размеры canvas были бы - 7*7 дюймов)
@@ -77,7 +79,7 @@ module SituationData
             else
                 cla() # - очищаются текущие координатные оси (если их не было, то автоматически создаются новые в новом окне)
             end
-            axis([0,axes_size[1],0,axes_size[2]]) # - устанавливаются размеры текущих осей или создаются новые оси в текущем окне
+            axis([-DELTA_AXIS_SIZE, axes_size[1]+DELTA_AXIS_SIZE, -DELTA_AXIS_SIZE, axes_size[2]+DELTA_AXIS_SIZE]) # - устанавливаются размеры текущих осей или создаются новые оси в текущем окне
             xticks(0:axes_size[1]) # - задаются положения координатных линий
             yticks(0:axes_size[2])
             grid(true) # - отображаются координатные линии
