@@ -22,7 +22,7 @@ module SituationData
     BUFF_SITUATION = nothing # инициализируется в draw(...), а затем используется в в handle_button_press_event!(...)
     IS_FIXED_ROBOT_POSITION = false # используется как флаг в handle_button_press_event!(...)
     
-    const BORDER_COLOR = :black
+    const BORDER_COLOR = :blue
     const BORDER_WIDTH = 3
     
     const BODY_KREST_SIZE = 1200 # концы креста чуть-чуть выступают за пределы тела робота, но часть креста в пределах тела нейтрализована
@@ -31,8 +31,8 @@ module SituationData
     const BODY_ALPHA = 0.5 # тело робота делается полупрозрачным с тем, чтобы сквозь него могли бы просвечивать маркеры
     const BODY_STYLE = :o
     
-    const MARKER_SIZE = 250
-    const MARKER_COLOR = :green 
+    const MARKER_SIZE = 150 #250
+    const MARKER_COLOR = :red 
     const MARKER_STYLE = :s 
 
     const DELTA_AXIS_SIZE = 0.03 # - "запас" для рамки axis, чтобы при установке внешней рамки поля она была бы хорошо видна 
@@ -518,7 +518,7 @@ using .HorizonSideRobot
 
 @info "\n*** Включен код с определениями соледующих типов\n\n\t1. @enum HorizonSide Nord=0 West=1 Sud=2 Ost=3 - \"перечисление\", определяет стороны горизонта на клетчатом поле с роботом: \nNord - Север (вверху), West - Запад (слева), Sud - Юг (внизу), Ost - Восток (справа)\n\n\t2. Robot - тип, позволяющий создавать исполнителей \"Робот на клетчатом поле со сторонами горизонта\" \nДля ознакомления со способами использования конструктора Robot и режимами работы см. help?>Robot \n(для перехода в режим help следует набрать в REPL: julia>?+<enter>)\n\n*** Более детальную информацию можно найти на https://github.com/Vibof/Robot"
 
-const ROBOT_VERSION = "2020 08 20 22-24"
+const ROBOT_VERSION = "2020 08 21 11-45"
 
 #inverse(side::HorizonSide) = HorizonSide(mod(Int(side)+2, 4)) 
 #left(side::HorizonSide) = HorizonSide(mod(Int(side)+1, 4))
