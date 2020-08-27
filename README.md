@@ -40,17 +40,17 @@
 
 После установки VS Code с расширением для Julia для запуска REPL (интерактивного окна) Julia потребуется из терминала, имеющегося в VS, выполнить команду: 
 
-cmd> julia.
+    cmd> julia.
 
 3. После этого, уже из REPL Julia, необходимо будет скачать с GitHab пакет PyPlot.jl.   
 
 Делается это с помощью встроенного пакетного менеджера очень просто. Сначала надо из стандартного режима REPL перейти в режим пакетного менеджера, набрав 
 
-julia>]+Enter
+    julia>]+Enter
 
 После чего выполнить скачивание: 
 
-pkg> add PyPlot.jl+Enter
+    pkg> add PyPlot.jl+Enter
 
 Процесс скачивания займет некоторое время. 
 После его завершения следует вернуться в стандартный режим REPL нажатием клавиши Backspace ("забой") 
@@ -67,7 +67,7 @@ pkg> add PyPlot.jl+Enter
 
 Для начала работы с "роботом" требуется еще выполнить включение содержимого файла "robot.jl" в область REPL (интерактивное коммандное окно Julia) VS Code
 
-julia> include("robot.jl")
+    julia> include("robot.jl")
 
 (делать это включение будет необходимо повторно в начале каждого нового сеанса работы с Julia)
 
@@ -137,35 +137,35 @@ julia> r=Robot(...; animate=true)
 
 Вот код на языке Julia, который достигает этой цели. Он состоит из главной функции и 3-х вспомогательных (подпрограмм).
 
-function mark_krest(r::Robot)
+    function mark_krest(r::Robot)
 
-    for side in HorizonSide
+        for side in HorizonSide
 
-        putmarkers!(r,side)
+            putmarkers!(r,side)
 
-        move_by_markers(r,inverse(side))
+            move_by_markers(r,inverse(side))
+
+        end
+
+        putmarker!(r)
 
     end
 
-    putmarker!(r)
+    putmarkers!(r::Robot,side::HorizonSide) = while isborder(r,side)==false 
 
-end
+        move!(r,side)
 
-putmarkers!(r::Robot,side::HorizonSide) = while isborder(r,side)==false 
+        putmarker!(r)
 
-    move!(r,side)
+    end
 
-    putmarker!(r)
+    move_by_markers(r::Robot,side::HorizonSide) = while ismarker(r)==true 
 
-end
+        move!(r,side) 
 
-move_by_markers(r::Robot,side::HorizonSide) = while ismarker(r)==true 
+    end
 
-    move!(r,side) 
-
-end
-
-inverse(side::HorizonSide) = HorizonSide(mod(Int(side)+2, 4)) 
+    inverse(side::HorizonSide) = HorizonSide(mod(Int(side)+2, 4)) 
 
 Повидимому, необходимо сразу дать пояснение, почему имена некоторых функций завершаются символом "!". Дело в том, что в языке Julia действует не формальное  
 соглашение, согласно которому все функции, изменяющие (потенциально способные изменять) данные, содержаиеся в своих аргументах, получаемых по сслылке, следует именовать с восклицательным знаком в конце.
@@ -174,35 +174,35 @@ inverse(side::HorizonSide) = HorizonSide(mod(Int(side)+2, 4))
 
 Чтобы выполнить функцию mark_krest! из REPL нужно будет опредение этой функции вставить в REPL с помощью include("example.jl"). Вот вся последовательность необходимых дейсвий.
 
-julia> include("robot.jl")
+    julia> include("robot.jl")
 
-julia> include("example.jl")
+    julia> include("example.jl")
 
-lulia> r=Robot(animate=true) # возможно редактирование обстановки 
+    lulia> r=Robot(animate=true) # возможно редактирование обстановки 
 
-julia> mark_krest!(r)
+    julia> mark_krest!(r)
 
 Разумеется, после внесения каких-либо изменений в файл example.jl, перед повторным вызовом mark_krest!(r) необходимо было бы заново выполнить include("example.jl"). Причем, поскольку файл "example.jl" содержит лишь определения функций вне отдельного модуля (в языке Julia есть специальная синтаксичская конструкция - module, которая в данном случае не используется), то перезапуск REPL julia не потребовался бы.
 
 Приведенное выше решение не является единственно возможным. Так, функцию putmarkers! уместно было бы реализовать еще и так:
 
-putmarkers!(r::Robot, side::HorizonSide) = while move_if_possible!(r, side) == true
+    putmarkers!(r::Robot, side::HorizonSide) = while move_if_possible!(r, side) == true
 
-    putmarker!(r)
+        putmarker!(r)
 
-end
+    end
 
-move_if_possible!(r::Robot, side::HorizonSide)::Bool = if isborder(r, side)
+    move_if_possible!(r::Robot, side::HorizonSide)::Bool = if isborder(r, side)
 
-    return false
+        return false
 
-else 
+    else 
 
-    move!(r,side)
+        move!(r,side)
 
-    return true
+        return true
 
-end
+    end
 
 Если иметь в виду, что в дальнейшем, возможно, придется усовершенствовать функцию mark_krest так, что бы она работала и при наличии на поле внутренних перегородок, то эта реализация будет даже предпочтительней (это позволит ограничиться модернизацией только функции move_if_posible, оставив весь остальной код без изменений).
 
@@ -214,7 +214,7 @@ end
 
 Имеется в виду, что привыполнении конструктора
 
-r=Robot(<имя_файла_с_исходной_обстановкой>)
+    r=Robot(<имя_файла_с_исходной_обстановкой>)
 
 происходит копирование данных из файла во внутренний буфер, содержащийся в объекте r, и при выполнении различных действий робота каждый раз происходит с обновление содержания этого буфера. При желании сохранить текущее содержание буфера в соответствующем файле следует использовать функцию save.
 
@@ -226,7 +226,7 @@ r=Robot(<имя_файла_с_исходной_обстановкой>)
 
 Создавать файл с исходной обстановкой можно также и с помощью конструктора Robot (без использования sutcreate) если только использовать его в режиме анимации: 
 
-Robot(animate=true)
+    Robot(animate=true)
 
 при этом целевой файл будет всегда иметь имя "untitled.sit" (впоследствии его, конечно, можно будет переименовать).
 
