@@ -4,7 +4,7 @@
 
 module HorizonSideRobot # "робот на клетчатом поле со сторонами горизонта"
 
-export HorizonSide, Nord, Sud, West, Ost, Robot, move!, isborder, putmarker!, ismarker, temperature, show, save, sitedit, sitcreate
+export HorizonSide, Nord, Sud, West, Ost, Robot, move!, isborder, putmarker!, ismarker, temperature, show, show!, save, sitedit, sitcreate
 
 """
     @enum HorizonSide Nord=0 West=1 Sud=2 Ost=3
@@ -342,7 +342,7 @@ using .SituationData
 -- Если animate=true, то при этом открывается окно с соответствующей начальной обстановкой, 
 иначе просто создается объект, соодержащий данные, определяющие эту обстановку (визуализации обстановки в этом случае нет).
 
-К исполнителю типа Robot применимы команды: `mowe`, `isboarder`, `putmarker`, `ismarker`, `temperature`, `show` (см. help)
+Командный интерфейс исполнителя (объекта) типа Robot: `mowe`, `isboarder`, `putmarker`, `ismarker`, `temperature`, `show`, `show!` (см. help)
 
 Для подготовительной работы с sit-файлами (в этих файлах сохраняется данные с информацией о некоторой обстановке на поле с роботом) 
 имеются специальные функции: `show`, 'sitedit`, 'sitcreate' (см. help)
@@ -449,19 +449,38 @@ temperature(r::Robot)::Int = is_inside(r) ? r.situation.temperature_map[position
 
 import Base.show
 """
-    show(r::Robot; edit=false)::Nothing
+    show(r::Robot)::Nothing
 
--- Открывает окно с текущей обстановкой на поле с роботом
-
--- Если `edit=true`, то возможно редактировать обстановку с помощью мыши (устанавливать/снимать перегородки и/или маркеры, перемещать робота) 
-При этом результат каждого отдельного акта редактирования немедленно автоматически сохраняется в файле "temp.sit"
+-- Открывает окно с текущей обстановкой на поле с роботом, при этом невозможно редактирование обстановки с помощью мыши 
+(устанавливать/снимать перегородки и/или маркеры, перемещать робота). Если же необходимо иметь возможность 
+редактировать показанную обстановку, то вместо show(::Robot) следует использовать функцию show!(::Robot)
 
     show(sitfile::AbstractString)::Nothing
 
 -- Открывает окно с текущей обстановкой на поле с роботом, загруженной непосредственно из файла. 
-Редактирование обстановки в этом случае невозможно (для редактирования sit-файлов имеется специальная функция sitedit).    
+Редактирование обстановки невозможно (для редактирования sit-файлов имеется специальная функция sitedit).    
 """
-function show(r::Robot; edit::Bool=false) 
+
+function show(r::Robot) 
+    pre_show_actions(r)
+    draw(r.situation; newfig=true) 
+end
+
+"""
+    show!(r::Robot)::Nothing
+
+-- Открывает окно с текущей обстановкой на поле с роботом, и предоставляет возможность редактирования
+ обстановки с помощью мыши (устанавливать/снимать перегородки и/или маркеры, перемещать робота).
+"""
+function show!(r::Robot)
+    pre_show_actions(r)
+    sitedit!(r.situation,"temp.sit")
+    # обеспечена возможность редактирования с помощью мыши отображаемой обстановки и немедленного сохранения каждого акта редактирвания в файле temp.sit 
+    r.actualfigure=gcf()
+    return nothing 
+end
+
+function pre_show_actions(r::Robot)
     if r.animate==true
         error("В режиме Robot(...;animate==true) невозможен вызов show(::Robot,...)")
     end
@@ -469,14 +488,6 @@ function show(r::Robot; edit::Bool=false)
         close(r.actualfigure)
         @warn("Окно с предыдущей обстановкой при открытии нового было автоматически закрыто")
     end
-    if edit==false
-        draw(r.situation; newfig=true) 
-    else # edit==true
-        sitedit!(r.situation,"temp.sit")
-        # обеспечена возможность редактирования с помощью мыши отображаемой обстановки и немедленного сохранения каждого акта редактирвания в файле temp.sit
-    end
-    r.actualfigure=gcf()
-    return nothing 
 end
 
 show(sitfile::AbstractString) = sitfile!="temp.sit" ? show(Robot(sitfile)) : (@warn "Просмотр temp.sit возможен только с помощью show(::Robot;...)")
@@ -518,7 +529,7 @@ using .HorizonSideRobot
 
 @info "\n*** Включен код с определениями соледующих типов\n\n\t1. @enum HorizonSide Nord=0 West=1 Sud=2 Ost=3 - \"перечисление\", определяет стороны горизонта на клетчатом поле с роботом: \nNord - Север (вверху), West - Запад (слева), Sud - Юг (внизу), Ost - Восток (справа)\n\n\t2. Robot - тип, позволяющий создавать исполнителей \"Робот на клетчатом поле со сторонами горизонта\" \nДля ознакомления со способами использования конструктора Robot и режимами работы см. help?>Robot \n(для перехода в режим help следует набрать в REPL: julia>?+<enter>)\n\n*** Более детальную информацию можно найти на https://github.com/Vibof/Robot"
 
-const ROBOT_VERSION = "2020 08 21 11-45"
+const ROBOT_VERSION = "2020 08 31 20-55"
 
 #inverse(side::HorizonSide) = HorizonSide(mod(Int(side)+2, 4)) 
 #left(side::HorizonSide) = HorizonSide(mod(Int(side)+1, 4))
