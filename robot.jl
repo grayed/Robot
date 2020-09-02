@@ -113,6 +113,7 @@ module SituationData
             end # тут, как и положено, все перегородки рисуются ТОЛЬКО ПО ОДНОМУ РАЗУ !!!
         end # nested function internal_borders_create
 
+        ion() # - без этого в среде Pluto нельзя редактировать обстановку 
         field_create(reverse(sit.frame_size), newfig)
         internal_borders_create(sit.frame_size...)
         if sit.is_framed == true
@@ -124,6 +125,7 @@ module SituationData
         if is_inside(sit)==true # робот - в пределах поля (иная ситуация может возникнуть при перемещениях робота)
             robot_create(get_coordinates(sit.robot_position)...)            
         end
+        show() # - без этого в среде Pluto не открвыается окно с роботом
         return nothing 
     end # function draw
 
@@ -460,7 +462,6 @@ import Base.show
 -- Открывает окно с текущей обстановкой на поле с роботом, загруженной непосредственно из файла. 
 Редактирование обстановки невозможно (для редактирования sit-файлов имеется специальная функция sitedit).    
 """
-
 function show(r::Robot) 
     pre_show_actions(r)
     draw(r.situation; newfig=true) 
@@ -530,7 +531,7 @@ using .HorizonSideRobot
 
 @info "\n*** Включен код с определениями соледующих типов\n\n\t1. @enum HorizonSide Nord=0 West=1 Sud=2 Ost=3 - \"перечисление\", определяет стороны горизонта на клетчатом поле с роботом: \nNord - Север (вверху), West - Запад (слева), Sud - Юг (внизу), Ost - Восток (справа)\n\n\t2. Robot - тип, позволяющий создавать исполнителей \"Робот на клетчатом поле со сторонами горизонта\" \nДля ознакомления со способами использования конструктора Robot и режимами работы см. help?>Robot \n(для перехода в режим help следует набрать в REPL: julia>?+<enter>)\n\n*** Более детальную информацию можно найти на https://github.com/Vibof/Robot"
 
-const ROBOT_VERSION = "2020 08 31 21-11"
+const ROBOT_VERSION = "2020 09 02 19-25"
 
 #inverse(side::HorizonSide) = HorizonSide(mod(Int(side)+2, 4)) 
 #left(side::HorizonSide) = HorizonSide(mod(Int(side)+1, 4))
