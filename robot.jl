@@ -371,7 +371,7 @@ end
 -- Перемещает робота в соседнюю клетку в заданном направлении (если только на пути нет перегoродки, в противном случае - прерывание)
 """
 function move!(r::Robot, side::HorizonSideRobot.HorizonSide)
-    if isborder(r,side)==true   
+    if isborder(r, side)==true   
         error("Робот врезался в перегородку при попытке сделать шаг в направлении $(side)") 
     end
     r.situation.robot_position = adjacent_position(r.situation.robot_position, side)
